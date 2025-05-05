@@ -46,7 +46,7 @@ module for_each_n(v, f, first=0, n) {
 }
 
 count = function (v, value, first=0, last, cmp=eq)
-  accumulate(v,first,last,0,function(a,b) eq(b,value) ? a+1 : a);
+  accumulate(v,first,last,0,function(a,b) cmp(b,value) ? a+1 : a);
 
 count_if = function (v, p, first=0, last)
   accumulate(v,first,last,0,function(a,b) p(b) ? a+1 : a);
@@ -54,7 +54,9 @@ count_if = function (v, p, first=0, last)
 mismatch = function (v1, first1=0, last1, v2, first2=0, last2, cmp=eq)
   let(l1 = end(v1,last1), l2 =  end(v2,last2),
     imax = min(l1-first1, l2-first2),
-    f=function (i) (i>=imax || !cmp(v1[first1+i],v2[first2+i])) ? (i<imax ? [first1+i,first2+i] : [first1+imax,first2+imax]) : f(i+1))
+    f=function (i) i>=imax ? [first1+imax,first2+imax]
+      : !cmp(v1[first1+i],v2[first2+i]) ? [first1+i,first2+i]
+      : f(i+1))
   assert(first1<=l1) assert(first2<=l2)
   f(0);
 
@@ -63,11 +65,11 @@ contains = function (v, value, first=0, last, cmp=eq)
   find(v,value,first,l,cmp)!=l;
 
 find_if = function (v, p, first=0, last)
-  let(l=end(v,last), f=function (i) (i>=l || p(v[i])) ? (i<l ? i : l) : f(i+1))
+  let(l=end(v,last), f=function (i) i>=l ? l : p(v[i]) ? i : f(i+1))
   f(first);
 
 find_if_not = function (v, p, first=0, last)
-  let(l=end(v,last), f=function (i) (i>=l || !p(v[i])) ? (i<l ? i : l) : f(i+1))
+  let(l=end(v,last), f=function (i) i>=l ? l : !p(v[i]) ? i : f(i+1))
   f(first);
 
 find = function(v, value, first=0, last, cmp=eq)
@@ -200,7 +202,7 @@ swap_ranges = function(v1, v2, first1=0, last1, first2=0)
   let(l1=end(v1,last1))
   [ copy(v2, first2, first2+l1-first1, v1, first1),
     copy(v1, first1, l1, v2, first2) ];
-    
+
 index_swap = function(v_a, v_b, a_i, b_i)
   swap_ranges(v_a, v_b, a_i, a_i+1, b_i);
 
@@ -231,7 +233,7 @@ std_rotate_copy = function(v, d, first=0, n_first, last, d_first=0)
     for(i=[first:1:n_first-1]) v[i],
     for(i=[l:1:len(v)-1]) v[i],
     for(i=[d_first+last-first:1:end(d)]) d[i] ];
-    
+
 //(Unsure): shift_left
 //(Unsure): shift_right | shifts elements in a range
 //(N/A): random_shuffle
@@ -246,7 +248,7 @@ std_rotate_copy = function(v, d, first=0, n_first, last, d_first=0)
 
 unique = function(v, first=0, last, cmp=eq)
   let(l=end(v,last))
-  [ for(prev=undef, i=first, cur=v[i]; i<l; prev=cur, i=i+1, cur=v[i]) if(!eq(prev,cur)) cur ];
+  [ for(prev=undef, i=first, cur=v[i]; i<l; prev=cur, i=i+1, cur=v[i]) if(!cmp(prev,cur)) cur ];
 
 //(N/A) unique_copy | creates a copy of some range of elements that contains no consecutive duplicates
 
@@ -283,7 +285,7 @@ is_sorted_until = function(v, first=0, last, cmp=lt)
 
 sort = function(v,first=0,last,cmp=lt)
   let(l=end(v,last), ms = function(f,l) let(d=l-f) d>2 ? let(m=floor((f+l)/2)) merge(ms(f,m),ms(m,l),cmp=cmp) : (d==2 ? minmax(v[f],v[f+1],cmp) : [v[f]]))
-  l-first>0 ? ms(first,l) : [];  
+  l-first>0 ? ms(first,l) : [];
 
 //TODO: partial_sort | sorts the first N elements of a range
 //(N/A) partial_sort_copy | copies and partially sorts a range of elements
@@ -362,7 +364,7 @@ is_heap_until = function(v, first=0, last, cmp=lt)
 //(Unsure) push_heap | adds an element to a max heap
 //pop_heap = function(v, first=0, last)
 //  let(f=first,l=end(v,last),e=ceil((l-f)/2),
-//sort_heap = 
+//sort_heap =
 
 
 // **************************
@@ -388,7 +390,7 @@ min_element = function(v, first=0, last, cmp=lt)
 minmax = function(a, b, cmp=lt)
   cmp(b,a) ? [b,a] : [a,b];
 
-minmax_element = function(v, first=0, last, cmp=lt) 
+minmax_element = function(v, first=0, last, cmp=lt)
   let(l = end(v,last),
     mm_e = function (i, mm) i < l ? mm_e(i+1, [cmp(v[i],v[mm[0]]) ? i : mm[0], cmp(v[i],v[mm[1]]) ? mm[1] : i ]) : mm)
   first < l ? mm_e(first+1, [first,first]) : [l,l];
