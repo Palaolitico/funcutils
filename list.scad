@@ -64,11 +64,14 @@ zip = function(v1, v2, v3=undef, v4=undef, v5=undef)
 select_mask = function(v, mask)
   [for (p=zip(v, mask)) if (p[1]) p[0]];
 
-shuffle = function(arr) len(arr) <= 1 ? arr :
+shuffle = function(arr) let (n=len(arr))
+  n <= 2 ? (
+    n <= 1 ? arr :
+    rands(0,1,1)[0] < 0.5 ? [arr[0],arr[1]] : [arr[1],arr[0]]
+  ) :
   let(
     mask = [for (r=rands(0, 1, len(arr))) r<0.5],
     left = [for (i=[0:len(arr)-1]) if(mask[i]) arr[i]],
     right = [for (i=[0:len(arr)-1]) if(!mask[i]) arr[i]]
   )
   concat(shuffle(left), shuffle(right));
-
